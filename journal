@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+#
+# Journal: A file-based, searchable command-line journal
+# https://github.com/somaulte/journal
+#
+# MIT License
+#
+# Copyright (c) 2018 somaulte
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+journal="$HOME/.journal"
+case "$1" in
+	-n|--new)
+		# TODO: Add filename function, revert to 
+		entry=$(( $(ls -afq $journal | wc -l) - 2 ))
+		micro "$journal/$entry"
+		if [[ -e $journal/$entry ]] && [[ -s $journal/$entry ]]; then
+			read -r index < $journal/$entry
+			echo "$entry: $index" >> $journal/index
+		fi
+		;;
+	-e|--edit)
+		if [[ -e $journal/$2 ]]; then
+			micro "$journal/$2"
+		else
+			exit 1
+		fi
+		;;
+	-i|--index)
+		cat $journal/index
+		;;
+	-s|--search)
+		# TODO: Add sort functionality; eg alpahabetical or numerical
+		grep -riH --exclude='index' "$2" $journal
+		;;
+	-r|--reload)
+		echo "Journal Index" > $journal/index
+		count=0
+		for entry in $journal/{1..9}; do
+			if [[ -e $entry ]]; then
+				entrynumber=${entry##*/}
+				read -r index < $entry
+				echo "$entrynumber: $index" >> $journal/index
+				count=$(( $count + 1 ))
+			fi
+		done
+		if [[ $count -gt 1 ]]; then
+			echo "$count entries indexed"
+		elif [[ $count -eq 1 ]]; then
+			echo "$count entry indexed"
+		else
+			exit 1
+		fi
+		;;
+esac
