@@ -48,7 +48,8 @@ case "$1" in
 		;;
 	-s|--search)
 		# TODO: Add sort functionality; eg alpahabetical or numerical
-		grep -riH --exclude='index' "$2" $journal
+		cd $journal
+		grep -riHT --exclude='index' "$2"
 		;;
 	-r|--reload)
 		echo "Journal Index" > $journal/index
@@ -68,5 +69,25 @@ case "$1" in
 		else
 			exit 1
 		fi
+		;;
+	-h|--help|*)
+		cat <<-EOF
+			Usage: journal OPTION [INDEX]
+			Options:
+			   -n, --new		Create a new entry
+			   -e, --edit		Edit an entry
+			   -i, --index		Lists all entries with corresponding index value
+			   -s, --search STRING	Search all entries for a specific string
+			   -r, --reload		Re-indexes the journal
+			   -h, --help		Display this message
+		EOF
+		case "$1" in
+			-h|--help)
+				exit 0
+				;;
+			*)
+				exit 1
+				;;
+		esac
 		;;
 esac
