@@ -26,6 +26,7 @@
 # SOFTWARE.
 
 journal="$HOME/.journal"
+shopt -s extglob
 case "$1" in
 	-n|--new)
 		# TODO: Add filename function, revert to 
@@ -54,12 +55,15 @@ case "$1" in
 	-r|--reload)
 		echo "Journal Index" > $journal/index
 		count=0
-		for entry in $journal/{1..9}; do
+		#for entry in $journal/+([0-9]); do
+		# Loop through entries numerically, rather than alpanumerically
+		# TODO: find a way to do this without `ls`
+		for entry in $(ls -v1 $journal/+([0-9])); do
 			if [[ -e $entry ]]; then
 				entrynumber=${entry##*/}
 				read -r index < $entry
 				echo "$entrynumber: $index" >> $journal/index
-				count=$(( $count + 1 ))
+				count=$(( count + 1 ))
 			fi
 		done
 		if [[ $count -gt 1 ]]; then
