@@ -27,10 +27,21 @@
 
 journal="$HOME/.journal"
 shopt -s extglob
-case "$1" in
+# Select -n|--new as our default option
+if [[ -z $1 ]]; then
+	opt="-n"
+else
+	opt="$1"
+fi
+case "$opt" in
 	-n|--new)
-		# TODO: Add filename function, revert to 
-		entry=$(( $(ls -afq $journal | wc -l) - 2 ))
+		entry=0
+		# Loop through entries until we reach the end or find a gap
+		# This works the same as -r|--reload so we don't edit an existing entry
+		while [[ -e $journal/$(( entry + 1 )) ]]; do
+			entry=$(( entry + 1 ))
+		done
+		entry=$(( entry + 1 ))
 		micro "$journal/$entry"
 		if [[ -e $journal/$entry ]] && [[ -s $journal/$entry ]]; then
 			read -r index < $journal/$entry
@@ -54,22 +65,18 @@ case "$1" in
 		;;
 	-r|--reload)
 		echo "Journal Index" > $journal/index
-		count=0
-		#for entry in $journal/+([0-9]); do
-		# Loop through entries numerically, rather than alpanumerically
-		# TODO: find a way to do this without `ls`
-		for entry in $(ls -v1 $journal/+([0-9])); do
-			if [[ -e $entry ]]; then
-				entrynumber=${entry##*/}
-				read -r index < $entry
-				echo "$entrynumber: $index" >> $journal/index
-				count=$(( count + 1 ))
-			fi
+		entry=1
+		# Loop through entries, this breaks if there is a gap
+		while [[ -e $journal/$entry ]]; do
+			read -r index < $journal/$entry
+			echo "$entry: $index" >> $journal/index
+			entry=$(( entry + 1 ))
 		done
-		if [[ $count -gt 1 ]]; then
-			echo "$count entries indexed"
-		elif [[ $count -eq 1 ]]; then
-			echo "$count entry indexed"
+		entry=$(( entry - 1 ))
+		if [[ $entry -gt 1 ]]; then
+			echo "$entry entries indexed"
+		elif [[ $entry -eq 1 ]]; then
+			echo "$entry entry indexed"
 		else
 			exit 1
 		fi
